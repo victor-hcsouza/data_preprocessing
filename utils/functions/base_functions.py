@@ -1,10 +1,14 @@
 import requests
 import pyspark.sql.functions as F
 import great_expectations as Ge
+import os
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql import SparkSession
 from typing import Dict
+
+#This is very important to ignore Airflow's proxy and send the message
+os.environ["no_proxy"]="*"
 
 class BaseFunctions:
     def send_telegram_notifications(self, chat_id: str, bot_id: str, message: str) -> None:
@@ -14,8 +18,8 @@ class BaseFunctions:
             "text": message
         }
 
-        response = requests.post(url, json=dados, timeout=10)
-        print(response)
+        response = requests.get(url, json=dados, timeout=10)
+
         if response.status_code == 200:
             print("Message sent successfully")
         else:
@@ -30,12 +34,12 @@ class BaseFunctions:
         return casted_df
 
     def check_df_quality(self, dataframe: DataFrame):
-        # dataframe = dataframe.withColumn("primaryKey", F.concat_ws("|", F.col("nm_track_name"), F.col("artist_name")))
+        dataframe = dataframe.withColumn("primaryKey", F.concat_ws("|", F.col("nm_track_name"), F.col("artist_name")))
 
-        # ge_df = Ge.dataset.SparkDFDataset(dataframe)
+        ge_df = Ge.dataset.SparkDFDataset(dataframe)
 
-        # response = ge_df.expect_column_values_to_be_unique(column='primaryKey')
-        return True
+        response = ge_df.expect_column_values_to_be_unique(column='primaryKey')
+        return response
 
     def run_sql_query(
         self, query: str, query_args: Dict[str, str], spark: SparkSession
