@@ -1,0 +1,8 @@
+pyspark == 3.4.1
+pre-commit == 3.6.0
+great_expectations == 0.18.8
+pandas == 2.2.0
+pytest == 8.0.0
+apache-airflow == 2.7.3
+python-dotenv == 1.0.1
+requests == 2.31.0
