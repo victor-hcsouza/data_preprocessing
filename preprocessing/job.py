@@ -47,7 +47,7 @@ class ExecuteJob:
                 dataframe=casted_df
             )
 
-            if response != True:
+            if response["success"] != True:
                 print("Error caught...\n")
                 raise ValueError(response)
             
