@@ -2,7 +2,9 @@ import requests
 import pyspark.sql.functions as F
 import great_expectations as Ge
 import os
+import boto3
 
+from io import StringIO
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql import SparkSession
 from typing import Dict
@@ -44,7 +46,8 @@ class BaseFunctions:
     def run_sql_query(
         self, query: str, query_args: Dict[str, str], spark: SparkSession
     ):
-        df = spark.sql(query, query_args)
+        query_formatted = query.format(**query_args)
+        df = spark.sql(query_formatted)
 
         return df
     
@@ -54,16 +57,23 @@ class BaseFunctions:
         for df, name_view in temp_view_args.items():
             df.createOrReplaceTempView(name_view)
 
+    def save_data(self, s3_client):
+        csv_buffer = StringIO()
+
+        pass
+
 
 class EnvironmentFunctions:
     @staticmethod
-    def _create_spark_session() -> SparkSession:
+    def _create_spark_session(aws_access_key: str, aws_secret_key: str) -> SparkSession:
         try:
             spark = SparkSession.builder \
                 .master("local[*]") \
                 .appName("MeuApp") \
                 .config("spark.executor.memory", "4g") \
                 .config("spark.driver.memory", "2g") \
+                .config("fs.s3a.access.key", aws_access_key) \
+                .config("fs.s3a.secret.key", aws_secret_key) \
                 .getOrCreate()
 
             print("PySpark environment created sucessfully\n")
@@ -72,12 +82,13 @@ class EnvironmentFunctions:
         except Exception as e:
             print(e)
 
-    def _create_source_dataframes(self, file, spark: SparkSession = None) -> DataFrame:
+    def _create_source_dataframes(self, s3_bucket: str, s3_file: str, file, spark: SparkSession = None) -> DataFrame:
         try:
             format = file.split('.')[-1]
             
             if format == 'csv':
-                df_csv = spark.read.csv(file, header=True, inferSchema=True).repartition(10)
+                #df_csv = spark.read.csv(file, header=True, inferSchema=True).repartition(10)
+                df_csv = spark.read.csv(f"s3a://{s3_bucket}/{s3_file}", header=True, inferSchema=True).repartition(10)
 
                 print("Dataframe created successfully\n")
                 return df_csv
@@ -99,3 +110,6 @@ class EnvironmentFunctions:
             
         except Exception as e:
             raise Exception(e)
+        
+    def _create_boto3_client(self):
+        pass

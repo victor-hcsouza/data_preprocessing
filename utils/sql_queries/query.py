@@ -1,4 +1,4 @@
 query = """
     select * from db
-    where track_name = :track_name
+    where track_name = '{track_name}'
 """

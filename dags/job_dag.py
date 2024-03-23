@@ -11,6 +11,21 @@ from datetime import timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from main import execute
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# AWS variables
+aws_access_key = os.getenv("aws_access_key_id")
+aws_secret_key = os.getenv("aws_secret_access_key")
+s3_bucket = os.getenv("s3_bucket")
+s3_file = os.getenv("s3_file_path")
+filepath_local = current_dir + (os.getenv("filepath_local"))
+#local_datapath = current_dir+filepath_local
+
+# Telegram variables
+chat_id = os.getenv("chat_id")
+bot_id = os.getenv("bot_id")
 
 default_args = {
     'owner': 'airflow',
@@ -33,7 +48,14 @@ with DAG(
 
     start_task = PythonOperator(
         task_id="job_processing_to_analytics", 
-        python_callable=execute, 
+        python_callable=lambda: execute(
+            chat_id=chat_id, 
+            bot_id=bot_id, 
+            aws_access_key=aws_access_key, 
+            aws_secret_key=aws_secret_key, 
+            s3_bucket=s3_bucket, 
+            s3_file=s3_file, 
+            datapath=filepath_local), 
         dag=dag,
     )
 

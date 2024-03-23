@@ -2,16 +2,9 @@ import traceback
 
 from utils.functions.execute_job_functions import Job
 from utils.sql_queries.query import query
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-chat_id = os.getenv("chat_id")
-bot_id = os.getenv("bot_id")
 
 class ExecuteJob:
-    def run(self, spark, dataframe):
+    def run(self, spark, dataframe, s3_client, chat_id, bot_id):
         try:
             print("Initiating process...\n")
 
@@ -53,6 +46,8 @@ class ExecuteJob:
             
             print("Job executed. Sending message...\n")
             msg = f"JOB: {job.task_name} EXECUTED \U00002705"
+
+            casted_df.show()
 
             job.send_telegram_notifications(
                 chat_id = job.chat_id,
